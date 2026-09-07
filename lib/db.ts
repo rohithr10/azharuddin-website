@@ -3,6 +3,18 @@ import mongoose from 'mongoose';
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/azharuddin_next';
 
 /**
+ * In production a missing MONGODB_URI would otherwise fall back to localhost,
+ * which does not exist on a hosting platform — producing a confusing timeout
+ * instead of naming the actual problem.
+ */
+if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+  console.error(
+    'MONGODB_URI is not set. Add it to your hosting platform’s environment variables — ' +
+      '.env.local is git-ignored and is never deployed. See /api/health for a full diagnosis.'
+  );
+}
+
+/**
  * Next.js hot-reloads modules in development, which would otherwise open a new
  * connection on every reload. Cache the connection on the global object.
  */

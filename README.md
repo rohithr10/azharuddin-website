@@ -164,6 +164,64 @@ Adding an article never requires a schema or code change.
 
 ---
 
+## Deploying
+
+### Environment variables (required on every host)
+
+`.env.local` is git-ignored and **is never deployed**. Set these in your hosting
+platform's dashboard, then redeploy:
+
+| Variable | Value |
+| --- | --- |
+| `MONGODB_URI` | A MongoDB Atlas string: `mongodb+srv://user:pass@cluster.mongodb.net/azharuddin` |
+| `SESSION_SECRET` | At least 32 random characters |
+| `NEXT_PUBLIC_SITE_URL` | The real domain, e.g. `https://azharuddin.com` |
+
+Generate a secret with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+### Is it configured correctly?
+
+Visit **`/api/health`** on the deployed site. It reports which variables are
+missing, whether the database is reachable, how many articles it can see, and
+what to do about each failure. It never reveals credentials.
+
+### MongoDB Atlas checklist
+
+1. Create a free cluster.
+2. **Database Access** → add a user, and note the password. URL-encode any
+   special characters when you paste it into the connection string.
+3. **Network Access** → Add IP Address → **Allow access from anywhere
+   (`0.0.0.0/0`)**. Serverless functions have no fixed IP, so a narrower
+   allowlist blocks the site.
+4. Copy the string from **Connect → Drivers** and add the database name after
+   the host: `.../azharuddin?retryWrites=true&w=majority`.
+5. Seed that database once, from your machine:
+
+   ```bash
+   MONGODB_URI="<your atlas string>" npm run seed
+   ```
+
+### Vercel and image uploads
+
+Everything works on Vercel **except uploading images**: its filesystem is
+read-only, so `public/uploads` cannot be written to. The CMS will show a clear
+message rather than failing silently.
+
+Two ways forward:
+
+- **Deploy where the filesystem persists** — a VPS, DigitalOcean App Platform
+  or Railway. Nothing in the code changes.
+- **Store images in an object store** — Vercel Blob, S3 or Cloudinary. Only
+  `lib/upload.ts` needs to change; it is deliberately the single place that
+  touches storage.
+
+Everything else — the journal, the CMS, search, the contact form — runs on
+Vercel unchanged.
+
 ## Going live
 
 1. Point `MONGODB_URI` at MongoDB Atlas (or your own server).

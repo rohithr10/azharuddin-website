@@ -20,8 +20,24 @@ export type SavedImage = {
   size: number;
 };
 
+/** True on hosts whose application filesystem is read-only (e.g. Vercel). */
+function isReadOnlyFilesystemError(error: unknown): boolean {
+  const code = (error as NodeJS.ErrnoException)?.code;
+  return code === 'EROFS' || code === 'EACCES' || code === 'EPERM';
+}
+
+const READ_ONLY_MESSAGE =
+  'This host does not allow the site to write files, so images cannot be stored on disk. ' +
+  'Either deploy somewhere with a persistent filesystem (a VPS, DigitalOcean, Railway), ' +
+  'or switch lib/upload.ts to an object store such as Vercel Blob, S3 or Cloudinary.';
+
 async function ensureUploadDir() {
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
+  try {
+    await fs.mkdir(UPLOAD_DIR, { recursive: true });
+  } catch (error) {
+    if (isReadOnlyFilesystemError(error)) throw new Error(READ_ONLY_MESSAGE);
+    throw error;
+  }
 }
 
 function randomName() {
@@ -64,7 +80,12 @@ export async function saveUpload(
 
   await ensureUploadDir();
   const filename = `${purpose}-${randomName()}.webp`;
-  await fs.writeFile(path.join(UPLOAD_DIR, filename), data);
+  try {
+    await fs.writeFile(path.join(UPLOAD_DIR, filename), data);
+  } catch (error) {
+    if (isReadOnlyFilesystemError(error)) throw new Error(READ_ONLY_MESSAGE);
+    throw error;
+  }
 
   const url = `/uploads/${filename}`;
 
