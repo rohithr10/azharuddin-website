@@ -1,0 +1,38 @@
+{
+  "name": "azharuddin-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal brand website and CMS for Azharuddin",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "seed": "node --env-file=.env.local scripts/seed.mjs",
+    "placeholders": "node scripts/make-placeholders.mjs"
+  },
+  "dependencies": {
+    "@tiptap/extension-image": "^2.11.5",
+    "@tiptap/extension-link": "^2.11.5",
+    "@tiptap/extension-placeholder": "^2.11.5",
+    "@tiptap/extension-underline": "^2.11.5",
+    "@tiptap/react": "^2.11.5",
+    "@tiptap/starter-kit": "^2.11.5",
+    "bcryptjs": "^2.4.3",
+    "jose": "^5.9.6",
+    "mongoose": "^8.9.5",
+    "next": "^15.1.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "sanitize-html": "^2.14.0",
+    "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.17.16",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@types/sanitize-html": "^2.13.0",
+    "typescript": "^5.7.3"
+  }
+}

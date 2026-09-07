@@ -1,0 +1,71 @@
+.band {
+  position: relative;
+  isolation: isolate;
+  background: var(--forest);
+  color: var(--text-on-dark);
+  padding-block: clamp(2.75rem, 6vw, 4.25rem);
+  overflow: hidden;
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  max-width: 960px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.mark {
+  flex-shrink: 0;
+  color: var(--gold-bright);
+  opacity: 0.85;
+  align-self: flex-start;
+}
+
+.quote {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.2rem, 2.4vw, 1.85rem);
+  line-height: 1.55;
+  letter-spacing: 0.01em;
+  color: var(--text-on-dark);
+}
+
+.sprig {
+  position: absolute;
+  right: clamp(-1rem, 2vw, 3rem);
+  top: 50%;
+  transform: translateY(-50%) rotate(18deg);
+  color: var(--gold-bright);
+  opacity: 0.28;
+  z-index: -1;
+}
+
+.sprigLeft {
+  position: absolute;
+  left: clamp(-2rem, 1vw, 2rem);
+  bottom: -30%;
+  transform: rotate(-24deg);
+  color: var(--gold-bright);
+  opacity: 0.16;
+  z-index: -1;
+}
+
+@media (max-width: 720px) {
+  .inner {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .mark {
+    align-self: center;
+  }
+
+  .sprig,
+  .sprigLeft {
+    opacity: 0.14;
+  }
+}

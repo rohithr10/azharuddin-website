@@ -1,0 +1,50 @@
+.screen {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  gap: 1.5rem;
+  padding: 2rem 1.25rem;
+  background: linear-gradient(150deg, #212a1b 0%, #14150f 60%, #2a2418 100%);
+  align-content: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  border-radius: 8px;
+  padding: clamp(1.75rem, 5vw, 2.75rem);
+  box-shadow: 0 30px 70px -35px rgba(0, 0, 0, 0.8);
+}
+
+.head {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  letter-spacing: 0.18em;
+  color: #1f2119;
+}
+
+.sub {
+  margin-top: 0.4rem;
+  color: #6b6d63;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.foot {
+  color: rgba(243, 239, 230, 0.6);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.foot a {
+  color: #c9a961;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

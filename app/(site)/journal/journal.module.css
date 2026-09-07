@@ -1,0 +1,44 @@
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.filter {
+  padding: 0.55rem 1.15rem;
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition: all 0.35s var(--ease);
+}
+
+.filter:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.filter[data-active='true'] {
+  background: var(--forest);
+  border-color: var(--forest);
+  color: var(--text-on-dark);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: clamp(1.5rem, 2.5vw, 2.25rem);
+}
+
+.grid > * {
+  height: 100%;
+}
+
+.empty {
+  padding: 4rem 2rem;
+  border: 1px dashed var(--sand);
+  text-align: center;
+  color: var(--text-muted);
+}

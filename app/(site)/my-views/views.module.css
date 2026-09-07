@@ -1,0 +1,35 @@
+.body {
+  max-width: 720px;
+  margin-inline: auto;
+}
+
+.pillars {
+  background: var(--cream-deep);
+  padding-block: clamp(3rem, 6vw, 5rem);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: clamp(1.5rem, 2.5vw, 2.25rem);
+}
+
+.grid > * {
+  height: 100%;
+}
+
+@media (max-width: 680px) {
+  .head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.9rem;
+  }
+}

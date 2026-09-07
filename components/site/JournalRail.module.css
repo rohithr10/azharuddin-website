@@ -1,0 +1,109 @@
+.section {
+  background: var(--cream-deep);
+  padding-block: clamp(3.5rem, 7vw, 6rem);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: clamp(1.75rem, 3vw, 2.75rem);
+}
+
+.wrap {
+  position: relative;
+}
+
+.scroller {
+  --rail-gap: clamp(1.25rem, 2vw, 2rem);
+  --rail-visible: 3;
+  display: flex;
+  gap: var(--rail-gap);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  padding-bottom: 0.5rem;
+}
+
+/* Fixed-width tracks so surplus cards overflow into the scroll rail
+   instead of being squeezed into the row. */
+.scroller > * {
+  flex: 0 0
+    calc(
+      (100% - (var(--rail-visible) - 1) * var(--rail-gap)) / var(--rail-visible)
+    );
+  scroll-snap-align: start;
+}
+
+.scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.arrow {
+  position: absolute;
+  top: 42%;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--cream-raised);
+  border: 1px solid var(--line);
+  color: var(--text);
+  box-shadow: 0 12px 30px -18px rgba(20, 21, 15, 0.6);
+  transition: background-color 0.35s var(--ease), color 0.35s var(--ease),
+    opacity 0.35s var(--ease), transform 0.35s var(--ease);
+}
+
+.arrow:hover:not(:disabled) {
+  background: var(--forest);
+  border-color: var(--forest);
+  color: var(--text-on-dark);
+}
+
+.arrow:disabled {
+  opacity: 0.28;
+  cursor: default;
+}
+
+.arrowPrev {
+  left: calc(-1 * clamp(0.75rem, 2.4vw, 1.6rem));
+  transform: translate(-50%, -50%);
+}
+
+.arrowNext {
+  right: calc(-1 * clamp(0.75rem, 2.4vw, 1.6rem));
+  transform: translate(50%, -50%);
+}
+
+.empty {
+  padding: 3.5rem 2rem;
+  border: 1px dashed var(--sand);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+@media (max-width: 1024px) {
+  .scroller {
+    --rail-visible: 2;
+  }
+}
+
+@media (max-width: 680px) {
+  .scroller {
+    --rail-visible: 1.15;
+  }
+
+  .arrow {
+    display: none;
+  }
+
+  .head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.9rem;
+  }
+}
