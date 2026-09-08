@@ -11,7 +11,8 @@ import {
   type ImagePurpose,
 } from '@/lib/image-specs';
 
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
+/** Legacy location for images stored before uploads moved into the database. */
+const LEGACY_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
 
 export type SavedImage = {
   url: string;
@@ -20,36 +21,17 @@ export type SavedImage = {
   size: number;
 };
 
-/** True on hosts whose application filesystem is read-only (e.g. Vercel). */
-function isReadOnlyFilesystemError(error: unknown): boolean {
-  const code = (error as NodeJS.ErrnoException)?.code;
-  return code === 'EROFS' || code === 'EACCES' || code === 'EPERM';
-}
-
-const READ_ONLY_MESSAGE =
-  'This host does not allow the site to write files, so images cannot be stored on disk. ' +
-  'Either deploy somewhere with a persistent filesystem (a VPS, DigitalOcean, Railway), ' +
-  'or switch lib/upload.ts to an object store such as Vercel Blob, S3 or Cloudinary.';
-
-async function ensureUploadDir() {
-  try {
-    await fs.mkdir(UPLOAD_DIR, { recursive: true });
-  } catch (error) {
-    if (isReadOnlyFilesystemError(error)) throw new Error(READ_ONLY_MESSAGE);
-    throw error;
-  }
-}
-
-function randomName() {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
 /**
  * Validates, normalises and stores an uploaded image.
  *
- * Oversized photographs are accepted and downscaled rather than rejected, so
- * the client is never blocked by a camera's native resolution. Everything is
- * re-encoded to WebP, which strips any embedded payload from the original file.
+ * The bytes are kept in MongoDB rather than on disk. That keeps uploads working
+ * on hosts with a read-only filesystem (Vercel and other serverless platforms)
+ * without introducing a separate object store, and means the images travel with
+ * the database in a backup.
+ *
+ * Everything is re-encoded to WebP, which also strips any payload hidden in the
+ * original file, and images with a fixed spec are resized and centre-cropped to
+ * exactly that size so the layout never shifts.
  */
 export async function saveUpload(
   file: File,
@@ -62,38 +44,35 @@ export async function saveUpload(
   if (!ACCEPTED_MIME_TYPES.includes(file.type as (typeof ACCEPTED_MIME_TYPES)[number])) {
     throw new Error('Only JPG, PNG and WebP images can be uploaded.');
   }
-  if (file.size > MAX_UPLOAD_BYTES * 4) {
+  if (file.size > MAX_UPLOAD_BYTES) {
     throw new Error(
-      `That file is ${(file.size / (1024 * 1024)).toFixed(1)} MB. Please use an image under 8 MB.`
+      `That file is ${(file.size / (1024 * 1024)).toFixed(1)} MB. The limit is ` +
+        `${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))} MB — please compress it and try again.`
     );
   }
 
   const spec = IMAGE_SPECS[purpose];
   const inputBuffer = Buffer.from(await file.arrayBuffer());
 
-  const pipeline = sharp(inputBuffer, { failOn: 'error' })
-    .rotate() // honour EXIF orientation
-    .resize({ width: spec.maxWidth, withoutEnlargement: true })
-    .webp({ quality: 84, effort: 4 });
+  const pipeline = sharp(inputBuffer, { failOn: 'error' }).rotate(); // honour EXIF orientation
 
-  const { data, info } = await pipeline.toBuffer({ resolveWithObject: true });
-
-  await ensureUploadDir();
-  const filename = `${purpose}-${randomName()}.webp`;
-  try {
-    await fs.writeFile(path.join(UPLOAD_DIR, filename), data);
-  } catch (error) {
-    if (isReadOnlyFilesystemError(error)) throw new Error(READ_ONLY_MESSAGE);
-    throw error;
+  if (spec.fixed) {
+    pipeline.resize(spec.width, spec.height, { fit: 'cover', position: 'attention' });
+  } else {
+    pipeline.resize({ width: spec.width, withoutEnlargement: true });
   }
 
-  const url = `/uploads/${filename}`;
+  const { data, info } = await pipeline
+    .webp({ quality: 84, effort: 4 })
+    .toBuffer({ resolveWithObject: true });
 
   await dbConnect();
-  await Media.create({
-    url,
-    filename,
+
+  const media = new Media({
+    url: 'pending',
+    filename: `${purpose}-${Date.now().toString(36)}.webp`,
     originalName: file.name?.slice(0, 180) ?? '',
+    data,
     mimeType: 'image/webp',
     width: info.width,
     height: info.height,
@@ -102,32 +81,45 @@ export async function saveUpload(
     purpose,
   });
 
-  return { url, width: info.width, height: info.height, size: data.length };
+  // The record's own id forms its permanent, immutable URL.
+  media.url = `/api/media/${media._id}.webp`;
+  await media.save();
+
+  return { url: media.url, width: info.width, height: info.height, size: data.length };
 }
 
 /**
- * Removes a file from disk and from the media library. Only paths inside
- * /public/uploads are touched, so a crafted URL cannot delete anything else.
+ * Removes an image from the library. Handles both database-backed images and
+ * files left on disk by an earlier version.
  */
 export async function deleteUpload(url?: string | null): Promise<void> {
-  if (!url || !url.startsWith('/uploads/')) return;
-
-  const filename = path.basename(url);
-  const target = path.join(UPLOAD_DIR, filename);
-  const resolved = path.resolve(target);
-  if (!resolved.startsWith(path.resolve(UPLOAD_DIR) + path.sep)) return;
-
-  try {
-    await fs.unlink(resolved);
-  } catch {
-    // Already gone — removing the database record below is still correct.
-  }
+  if (!url) return;
 
   await dbConnect();
-  await Media.deleteOne({ url });
+
+  if (url.startsWith('/api/media/')) {
+    await Media.deleteOne({ url });
+    return;
+  }
+
+  if (url.startsWith('/uploads/')) {
+    const filename = path.basename(url);
+    const resolved = path.resolve(path.join(LEGACY_UPLOAD_DIR, filename));
+
+    // Never touch anything outside the uploads directory.
+    if (resolved.startsWith(path.resolve(LEGACY_UPLOAD_DIR) + path.sep)) {
+      try {
+        await fs.unlink(resolved);
+      } catch {
+        // Already gone — removing the database record below is still correct.
+      }
+    }
+
+    await Media.deleteOne({ url });
+  }
 }
 
 /** True when the URL points at a file this app manages. */
 export function isManagedUpload(url?: string | null): boolean {
-  return Boolean(url && url.startsWith('/uploads/'));
+  return Boolean(url && (url.startsWith('/api/media/') || url.startsWith('/uploads/')));
 }

@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import styles from './SiteFooter.module.css';
-import { NAV_LINKS } from './nav-links';
 import { InstagramIcon, LinkedInIcon, MailIcon } from '@/components/ui/icons';
 import { mailtoUrl, safeUrl } from '@/lib/utils';
 import type { SettingsView } from '@/lib/types';
@@ -31,14 +30,6 @@ export default function SiteFooter({ settings }: { settings: SettingsView }) {
         <Link href="/" className={styles.logo}>
           {settings.siteName || 'AZHARUDDIN'}
         </Link>
-
-        <nav className={styles.nav} aria-label="Footer">
-          {NAV_LINKS.map((item) => (
-            <Link key={item.href} href={item.href} className={styles.link}>
-              {item.label}
-            </Link>
-          ))}
-        </nav>
 
         <div className={styles.right}>
           {(linkedin || instagram || email) && (

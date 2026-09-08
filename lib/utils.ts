@@ -68,3 +68,38 @@ export function mailtoUrl(email?: string | null): string {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return '';
   return `mailto:${trimmed}`;
 }
+
+/** YYYY-MM-DD for <input type="date">, in local time. */
+export function toDateInputValue(value?: string | Date | null): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/**
+ * Reads a YYYY-MM-DD value from a date input. Keeps the time-of-day from the
+ * existing date where there is one, so re-saving does not reshuffle articles
+ * that were published on the same day.
+ */
+export function fromDateInputValue(
+  value: string,
+  previous?: string | Date | null
+): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+
+  const [, year, month, day] = match;
+  const base = previous ? new Date(previous) : null;
+  const valid = base && !Number.isNaN(base.getTime());
+
+  return new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    valid ? base!.getHours() : 9,
+    valid ? base!.getMinutes() : 0,
+    valid ? base!.getSeconds() : 0
+  );
+}

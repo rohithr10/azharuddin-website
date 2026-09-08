@@ -33,7 +33,13 @@ const MediaSchema = new Schema(
     url: { type: String, required: true, unique: true },
     filename: { type: String, required: true },
     originalName: { type: String, default: '' },
-    mimeType: { type: String, default: 'image/jpeg' },
+    /**
+     * The image bytes live in the database rather than on disk, so uploads work
+     * on hosts with a read-only filesystem (Vercel and other serverless
+     * platforms) without needing a separate object store.
+     */
+    data: { type: Buffer, select: false },
+    mimeType: { type: String, default: 'image/webp' },
     width: { type: Number, default: 0 },
     height: { type: Number, default: 0 },
     size: { type: Number, default: 0 },

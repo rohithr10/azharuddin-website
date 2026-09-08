@@ -7,15 +7,19 @@ export type ImagePurpose = 'hero' | 'featured' | 'article' | 'about' | 'footer' 
 
 export type ImageSpec = {
   label: string;
+  /** Exact stored width. Uploads are resized to this. */
   width: number;
+  /** Exact stored height. Uploads are cropped to this. */
   height: number;
   ratio: string;
   maxBytes: number;
-  maxWidth: number;
+  /** false for the media library, where the original proportions are kept. */
+  fixed: boolean;
   note: string;
 };
 
-export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB, per the design spec
+/** Hard limit on what may be uploaded. Anything larger is rejected outright. */
+export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB
 
 export const IMAGE_SPECS: Record<ImagePurpose, ImageSpec> = {
   hero: {
@@ -24,7 +28,7 @@ export const IMAGE_SPECS: Record<ImagePurpose, ImageSpec> = {
     height: 850,
     ratio: '16:9 (wide banner)',
     maxBytes: MAX_UPLOAD_BYTES,
-    maxWidth: 2400,
+    fixed: true,
     note: 'A wide, cinematic photograph. Keep the subject slightly right of centre so the headline stays readable.',
   },
   featured: {
@@ -33,7 +37,7 @@ export const IMAGE_SPECS: Record<ImagePurpose, ImageSpec> = {
     height: 675,
     ratio: '16:9',
     maxBytes: MAX_UPLOAD_BYTES,
-    maxWidth: 1800,
+    fixed: true,
     note: 'Used for the highlighted story on the homepage.',
   },
   article: {
@@ -42,7 +46,7 @@ export const IMAGE_SPECS: Record<ImagePurpose, ImageSpec> = {
     height: 675,
     ratio: '16:9',
     maxBytes: MAX_UPLOAD_BYTES,
-    maxWidth: 1800,
+    fixed: true,
     note: 'Shown on the article card, the journal archive and the top of the article page.',
   },
   about: {
@@ -51,7 +55,7 @@ export const IMAGE_SPECS: Record<ImagePurpose, ImageSpec> = {
     height: 600,
     ratio: '4:3',
     maxBytes: MAX_UPLOAD_BYTES,
-    maxWidth: 1600,
+    fixed: true,
     note: 'A portrait-style photograph works best here.',
   },
   footer: {
@@ -60,7 +64,7 @@ export const IMAGE_SPECS: Record<ImagePurpose, ImageSpec> = {
     height: 300,
     ratio: '~6.4:1',
     maxBytes: MAX_UPLOAD_BYTES,
-    maxWidth: 2400,
+    fixed: true,
     note: 'A dark, low-contrast image keeps the footer text readable.',
   },
   general: {
@@ -69,8 +73,8 @@ export const IMAGE_SPECS: Record<ImagePurpose, ImageSpec> = {
     height: 900,
     ratio: 'any',
     maxBytes: MAX_UPLOAD_BYTES,
-    maxWidth: 1800,
-    note: 'General purpose image for the media library.',
+    fixed: false,
+    note: 'General purpose image for the media library. Proportions are kept as they are.',
   },
 };
 
@@ -80,7 +84,7 @@ export const ACCEPTED_EXTENSIONS = '.jpg,.jpeg,.png,.webp';
 export function describeSpec(purpose: ImagePurpose): string[] {
   const spec = IMAGE_SPECS[purpose];
   return [
-    `Recommended size: ${spec.width} × ${spec.height} px`,
+    `${spec.fixed ? 'Required size' : 'Recommended size'}: ${spec.width} × ${spec.height} px`,
     `Aspect ratio: ${spec.ratio}`,
     `Max file size: ${Math.round(spec.maxBytes / (1024 * 1024))} MB`,
     'Format: JPG, PNG or WebP',

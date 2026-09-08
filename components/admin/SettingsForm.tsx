@@ -69,7 +69,10 @@ export default function SettingsForm({ settings }: { settings: SettingsView }) {
       {/* ---------------- Hero ---------------- */}
       <div className="a-panel">
         <h2 className="a-panel-title">Homepage banner</h2>
-        <p className="a-panel-note">The large photograph and headline at the top of the homepage.</p>
+        <p className="a-panel-note">
+          The large photograph and headline at the top of the homepage. These are the same fields as
+          the <strong>Status</strong> screen — edit them in either place.
+        </p>
 
         <ImageField
           name="heroImage"
@@ -187,7 +190,11 @@ export default function SettingsForm({ settings }: { settings: SettingsView }) {
       {/* ---------------- About ---------------- */}
       <div className="a-panel">
         <h2 className="a-panel-title">About section</h2>
-        <p className="a-panel-note">The photograph and introduction near the foot of the homepage.</p>
+        <p className="a-panel-note">
+          The photograph and introduction near the foot of the homepage, above the “Read more about
+          me” button. Leave the statement or introduction empty and the homepage shows a short brief
+          taken from the <strong>About Me</strong> page instead.
+        </p>
 
         <ImageField
           name="aboutImage"
@@ -235,7 +242,10 @@ export default function SettingsForm({ settings }: { settings: SettingsView }) {
             maxLength={160}
             style={{ minHeight: '70px' }}
           />
-          <span className="a-hint">Press Enter to split it across two lines, as in the design.</span>
+          <span className="a-hint">
+            Press Enter to split it across two lines, as in the design. Leave empty to use the About
+            Me page title.
+          </span>
         </div>
 
         <div className="a-field" style={{ marginBottom: 0 }}>
@@ -249,6 +259,9 @@ export default function SettingsForm({ settings }: { settings: SettingsView }) {
             defaultValue={settings.aboutText}
             maxLength={600}
           />
+          <span className="a-hint">
+            Leave empty to show the introduction from the About Me page.
+          </span>
         </div>
       </div>
 

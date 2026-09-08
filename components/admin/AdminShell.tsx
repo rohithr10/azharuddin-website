@@ -14,6 +14,7 @@ const PRIMARY = [
 ];
 
 const SITE = [
+  { href: '/admin/status', label: 'Status' },
   { href: '/admin/featured-story', label: 'Featured Story' },
   { href: '/admin/pages', label: 'Website Pages' },
   { href: '/admin/settings', label: 'Settings' },

@@ -7,6 +7,7 @@ import ImageField from './ImageField';
 import RichTextEditor from './RichTextEditor';
 import SubmitButton from './SubmitButton';
 import { saveArticleAction } from '@/app/admin/actions';
+import { toDateInputValue } from '@/lib/utils';
 import type { ActionState, ArticleView, CategoryView } from '@/lib/types';
 
 type Props = {
@@ -120,6 +121,23 @@ export default function ArticleForm({ article, categories }: Props) {
                   Add a new category ↗
                 </Link>{' '}
                 then reload this page.
+              </span>
+            </div>
+
+            <div className="a-field">
+              <label className="a-label" htmlFor="publishedAt">
+                Article date
+              </label>
+              <input
+                id="publishedAt"
+                name="publishedAt"
+                type="date"
+                className="a-input"
+                defaultValue={toDateInputValue(article?.publishedAt ?? article?.createdAt)}
+              />
+              <span className="a-hint">
+                Shown on the date badge over the article image, on the article page and in the
+                journal. Leave empty on a new article to use today’s date.
               </span>
             </div>
 

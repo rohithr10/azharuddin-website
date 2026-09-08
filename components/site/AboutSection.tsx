@@ -4,9 +4,24 @@ import styles from './AboutSection.module.css';
 import Reveal from '@/components/ui/Reveal';
 import { ArrowRight, Sprig } from '@/components/ui/icons';
 import { PLACEHOLDER, withFallback } from '@/lib/placeholders';
-import type { SettingsView } from '@/lib/types';
+import type { PageView, SettingsView } from '@/lib/types';
 
-export default function AboutSection({ settings }: { settings: SettingsView }) {
+type Props = {
+  settings: SettingsView;
+  /** Used as the short brief when the Settings fields are left empty. */
+  aboutPage?: PageView | null;
+};
+
+export default function AboutSection({ settings, aboutPage }: Props) {
+  // Editable in Settings → About. Left blank, it falls back to the About Me
+  // page, so the homepage shows a short brief of that page instead.
+  const heading =
+    settings.aboutHeading?.trim() ||
+    aboutPage?.title?.trim() ||
+    'A life of purpose.\nA legacy of impact.';
+
+  const text = settings.aboutText?.trim() || aboutPage?.intro?.trim() || '';
+
   return (
     <section className={styles.section} aria-labelledby="about-heading">
       <Sprig size={140} className={styles.sprig} aria-hidden />
@@ -24,10 +39,10 @@ export default function AboutSection({ settings }: { settings: SettingsView }) {
         <Reveal className={styles.content}>
           <p className="eyebrow eyebrow--rule">{settings.aboutEyebrow || 'About Azharuddin'}</p>
           <h2 id="about-heading" className={styles.heading}>
-            {settings.aboutHeading || 'A life of purpose.\nA legacy of impact.'}
+            {heading}
           </h2>
           <hr className="rule-gold" />
-          {settings.aboutText && <p className={styles.text}>{settings.aboutText}</p>}
+          {text && <p className={styles.text}>{text}</p>}
           <Link href="/about-me" className={`btn btn--solid-forest ${styles.cta}`}>
             {settings.aboutCtaLabel || 'READ MORE ABOUT ME'}
             <ArrowRight size={16} />

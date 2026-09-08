@@ -58,9 +58,16 @@ or let it always show the newest one.
 **Website Pages** — the wording, header image and sections of About Me,
 My Views, Journal, Media and Contact.
 
-**Settings** — site name and description; the homepage banner image, headline
-and button; the philosophy quote; the About image and text; the footer image
-and lines; LinkedIn, Instagram and email.
+**Status** — the homepage banner image and the status wording shown over it
+(the line above the name, the name itself, the status sentence and the button).
+The same fields also appear under Settings.
+
+**Settings** — site name and description; the homepage banner; the philosophy
+quote; the About image and text; the footer image and lines; LinkedIn,
+Instagram and email.
+
+**Article dates** — each article carries its own date, editable on the article
+form. It drives the date badge on the cards, the article page and the ordering.
 
 **Media Library** — every uploaded image, with its dimensions and file size.
 Images still in use are labelled and protected from deletion.
@@ -74,15 +81,26 @@ Images still in use are labelled and protected from deletion.
 The CMS shows these next to every upload field. Larger images are accepted and
 resized automatically rather than rejected.
 
-| Where | Size | Ratio |
+These sizes are enforced, not suggested. Whatever is uploaded is resized and
+centre-cropped to exactly these dimensions, so the layout never shifts because
+of an odd photograph.
+
+| Where | Stored size | Ratio |
 | --- | --- | --- |
 | Homepage banner | 1920 × 850 px | 16:9 |
 | Featured story | 1200 × 675 px | 16:9 |
 | Journal article | 1200 × 675 px | 16:9 |
 | About section | 800 × 600 px | 4:3 |
 | Footer background | 1920 × 300 px | ~6.4:1 |
+| Media library | max 1600 px wide | kept as-is |
 
-Max 2 MB recommended · JPG, PNG or WebP · stored as WebP.
+**Maximum file size: 2 MB**, enforced in the browser and again on the server.
+JPG, PNG or WebP in; always stored as WebP.
+
+Uploaded images are held in MongoDB and served from `/api/media/<id>.webp` with
+immutable caching. That means uploads work on hosts with a read-only filesystem
+(Vercel included) with no object store to set up, and images travel with the
+database in a backup.
 
 Until real photography is uploaded, the site falls back to the neutral images
 in `public/placeholders/`. Every one of them is replaceable from the CMS.
@@ -205,22 +223,12 @@ what to do about each failure. It never reveals credentials.
    MONGODB_URI="<your atlas string>" npm run seed
    ```
 
-### Vercel and image uploads
+### Vercel
 
-Everything works on Vercel **except uploading images**: its filesystem is
-read-only, so `public/uploads` cannot be written to. The CMS will show a clear
-message rather than failing silently.
-
-Two ways forward:
-
-- **Deploy where the filesystem persists** — a VPS, DigitalOcean App Platform
-  or Railway. Nothing in the code changes.
-- **Store images in an object store** — Vercel Blob, S3 or Cloudinary. Only
-  `lib/upload.ts` needs to change; it is deliberately the single place that
-  touches storage.
-
-Everything else — the journal, the CMS, search, the contact form — runs on
-Vercel unchanged.
+Everything runs on Vercel, image uploads included: they are stored in MongoDB
+rather than on disk, so the read-only filesystem is not a problem and there is
+no object store to configure. Set the three environment variables above, make
+sure Atlas allows `0.0.0.0/0`, and deploy.
 
 ## Going live
 
@@ -236,10 +244,10 @@ npm run build
 npm start
 ```
 
-**Hosting note:** uploads are written to `public/uploads` on disk, which suits a
-VPS, DigitalOcean, Railway or any persistent-filesystem host. On a serverless
-platform (Vercel) that directory is not persistent — move `lib/upload.ts` to S3,
-Cloudinary or Vercel Blob first. Everything else is portable as-is.
+**Hosting note:** uploaded images live in MongoDB, so the app is portable to any
+host — serverless or not — with no storage service to configure. If the library
+ever grows large enough to warrant a CDN, `lib/upload.ts` is the single place
+that touches storage.
 
 ---
 

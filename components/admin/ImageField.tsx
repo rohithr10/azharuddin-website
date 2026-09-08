@@ -1,7 +1,12 @@
 'use client';
 
 import { useId, useRef, useState } from 'react';
-import { ACCEPTED_EXTENSIONS, IMAGE_SPECS, type ImagePurpose } from '@/lib/image-specs';
+import {
+  ACCEPTED_EXTENSIONS,
+  IMAGE_SPECS,
+  MAX_UPLOAD_BYTES,
+  type ImagePurpose,
+} from '@/lib/image-specs';
 
 type Props = {
   name: string;
@@ -35,6 +40,16 @@ export default function ImageField({
   const [dragging, setDragging] = useState(false);
 
   async function upload(file: File) {
+    // Fail fast on the client so an oversized file is never sent at all.
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError(
+        `That file is ${(file.size / (1024 * 1024)).toFixed(1)} MB. The limit is ` +
+          `${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))} MB — please compress it and try again.`
+      );
+      if (fileRef.current) fileRef.current.value = '';
+      return;
+    }
+
     setBusy(true);
     setError('');
 
@@ -101,7 +116,8 @@ export default function ImageField({
         <div>
           <ul className="a-spec-list">
             <li>
-              <strong>Recommended size:</strong> {spec.width} × {spec.height} px
+              <strong>{spec.fixed ? 'Required size' : 'Recommended size'}:</strong> {spec.width} ×{' '}
+              {spec.height} px
             </li>
             <li>
               <strong>Aspect ratio:</strong> {spec.ratio}
@@ -112,6 +128,12 @@ export default function ImageField({
             <li>
               <strong>Formats:</strong> JPG, PNG or WebP
             </li>
+            {spec.fixed && (
+              <li>
+                Any photograph is automatically resized and centre-cropped to exactly{' '}
+                {spec.width} × {spec.height} px, so the layout stays consistent.
+              </li>
+            )}
             <li>{spec.note}</li>
           </ul>
 

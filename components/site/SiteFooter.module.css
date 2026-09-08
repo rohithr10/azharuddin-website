@@ -28,7 +28,8 @@
 
 .top {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto auto;
+  justify-content: space-between;
   align-items: center;
   gap: 2rem;
   padding-block: 2.25rem;
@@ -42,25 +43,6 @@
 }
 
 .logo:hover {
-  color: var(--gold-bright);
-}
-
-.nav {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: clamp(1.25rem, 2.5vw, 2.25rem);
-}
-
-.link {
-  font-size: 0.72rem;
-  letter-spacing: 0.17em;
-  text-transform: uppercase;
-  color: var(--text-on-dark);
-  transition: color 0.3s var(--ease);
-}
-
-.link:hover {
   color: var(--gold-bright);
 }
 
@@ -107,6 +89,7 @@
 @media (max-width: 900px) {
   .top {
     grid-template-columns: 1fr;
+    justify-content: center;
     justify-items: center;
     text-align: center;
     gap: 1.75rem;

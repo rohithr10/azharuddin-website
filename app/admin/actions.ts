@@ -16,7 +16,7 @@ import {
 } from '@/lib/auth';
 import { sanitizeArticleHtml, sanitizeText } from '@/lib/sanitize';
 import { deleteUpload } from '@/lib/upload';
-import { excerptFromHtml, readingTime, slugify } from '@/lib/utils';
+import { excerptFromHtml, fromDateInputValue, readingTime, slugify } from '@/lib/utils';
 import type { ActionState } from '@/lib/types';
 
 /* ================================================================
@@ -146,6 +146,7 @@ export async function saveArticleAction(
     const imageAlt = sanitizeText(formData.get('imageAlt'), 200);
     const seoTitle = sanitizeText(formData.get('seoTitle'), 120);
     const seoDescription = sanitizeText(formData.get('seoDescription'), 300);
+    const publishedInput = String(formData.get('publishedAt') ?? '').trim();
 
     if (!title) return { error: 'Please give the article a title.' };
     if (!categoryId) return { error: 'Please choose a category for this article.' };
@@ -180,7 +181,16 @@ export async function saveArticleAction(
       article.seoDescription = seoDescription;
       article.readingMinutes = readingTime(content);
       article.status = status;
-      if (status === 'published' && !article.publishedAt) article.publishedAt = new Date();
+
+      // The owner sets the date shown on the article and its cards.
+      const chosenDate = publishedInput
+        ? fromDateInputValue(publishedInput, article.publishedAt)
+        : null;
+      if (chosenDate) {
+        article.publishedAt = chosenDate;
+      } else if (status === 'published' && !article.publishedAt) {
+        article.publishedAt = new Date();
+      }
 
       await article.save();
       destination = `/admin/articles?saved=${article._id}`;
@@ -197,7 +207,8 @@ export async function saveArticleAction(
         seoDescription,
         readingMinutes: readingTime(content),
         status,
-        publishedAt: status === 'published' ? new Date() : null,
+        publishedAt:
+          fromDateInputValue(publishedInput) ?? (status === 'published' ? new Date() : null),
       });
       destination = `/admin/articles?saved=${created._id}`;
     }
@@ -346,6 +357,49 @@ export async function setFeaturedStoryAction(
   } catch (error) {
     console.error('Setting the featured story failed:', error);
     return { error: 'The featured story could not be updated.' };
+  }
+}
+
+/* ================================================================
+ * Status — the homepage banner image and the wording over it
+ * ================================================================ */
+
+export async function saveStatusAction(
+  _prev: ActionState | undefined,
+  formData: FormData
+): Promise<ActionState> {
+  try {
+    await requireSession();
+    await dbConnect();
+
+    const settings =
+      (await Settings.findOne({ singleton: 'site' })) ?? new Settings({ singleton: 'site' });
+
+    const text = (key: string, max: number) => sanitizeText(formData.get(key), max);
+
+    settings.heroEyebrow = text('heroEyebrow', 120);
+    settings.heroHeading = text('heroHeading', 80) || 'AZHARUDDIN';
+    settings.heroText = text('heroText', 400);
+    settings.heroCtaLabel = text('heroCtaLabel', 60);
+    settings.heroCtaHref = text('heroCtaHref', 120) || '/my-views';
+    settings.heroRailText = text('heroRailText', 80);
+
+    const incomingImage = text('heroImage', 400);
+    if (settings.heroImage && settings.heroImage !== incomingImage) {
+      await deleteUpload(settings.heroImage);
+    }
+    settings.heroImage = incomingImage;
+
+    settings.updatedAt = new Date();
+    await settings.save();
+
+    revalidatePath('/', 'layout');
+    revalidatePath('/admin/status');
+    revalidatePath('/admin/settings');
+    return { ok: true, message: 'The banner and status have been saved.' };
+  } catch (error) {
+    console.error('Saving the status failed:', error);
+    return { error: 'The status could not be saved.' };
   }
 }
 
