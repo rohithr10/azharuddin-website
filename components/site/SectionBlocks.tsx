@@ -46,7 +46,7 @@ export default function SectionBlocks({ sections, variant }: Props) {
                     src={section.image}
                     alt={section.heading || ''}
                     width={440}
-                    height={275}
+                    height={248}
                     sizes="(max-width: 900px) 100vw, 220px"
                   />
                 ) : null}
@@ -101,7 +101,7 @@ export default function SectionBlocks({ sections, variant }: Props) {
                 <Image
                   src={section.image}
                   alt={section.heading || ''}
-                  width={900}
+                  width={1200}
                   height={675}
                   sizes="(max-width: 900px) 100vw, 45vw"
                 />

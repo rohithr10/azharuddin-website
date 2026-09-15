@@ -16,7 +16,8 @@
 
 .media {
   position: relative;
-  aspect-ratio: 16 / 10;
+  /* Matches the stored 1200 × 675 article image, so nothing is cropped. */
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: var(--cream-deep);
 }

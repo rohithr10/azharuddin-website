@@ -34,7 +34,7 @@ export default function FeaturedStory({ article }: { article: ArticleView }) {
                   src={withFallback(article.image, PLACEHOLDER.featured)}
                   alt={article.imageAlt || article.title}
                   width={1200}
-                  height={750}
+                  height={675}
                   sizes="(max-width: 900px) 100vw, 60vw"
                 />
                 <DateBadge date={article.publishedAt} placement="top-right" />

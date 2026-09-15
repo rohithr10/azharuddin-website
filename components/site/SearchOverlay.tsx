@@ -117,7 +117,7 @@ export default function SearchOverlay({ open, onClose }: Props) {
                     alt=""
                     loading="lazy"
                     width={216}
-                    height={135}
+                    height={122}
                   />
                 </div>
                 <div>

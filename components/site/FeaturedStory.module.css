@@ -32,7 +32,7 @@
 .figure {
   position: relative;
   margin: 0;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: var(--cream-deep);
 }
@@ -64,9 +64,5 @@
 
   .title {
     max-width: 100%;
-  }
-
-  .figure {
-    aspect-ratio: 16 / 11;
   }
 }

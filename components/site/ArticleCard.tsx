@@ -20,8 +20,8 @@ export default function ArticleCard({ article, showExcerpt = false, sizes }: Pro
           <Image
             src={withFallback(article.image, PLACEHOLDER.article)}
             alt={article.imageAlt || article.title}
-            width={800}
-            height={500}
+            width={1200}
+            height={675}
             sizes={sizes ?? '(max-width: 640px) 86vw, (max-width: 1024px) 45vw, 30vw'}
           />
           <DateBadge date={article.publishedAt ?? article.createdAt} placement="top-left" />

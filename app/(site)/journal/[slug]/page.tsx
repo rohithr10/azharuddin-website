@@ -72,18 +72,6 @@ export default async function ArticlePage({ params }: Props) {
       />
 
       <header className={styles.masthead}>
-        <div className={styles.media}>
-          <Image
-            src={withFallback(article.image, PLACEHOLDER.article)}
-            alt={article.imageAlt || article.title}
-            fill
-            priority
-            sizes="100vw"
-            style={{ objectFit: 'cover' }}
-          />
-        </div>
-        <div className={styles.scrim} aria-hidden />
-
         <div className="container">
           <div className={styles.mastheadInner}>
             <p className={styles.meta}>
@@ -99,6 +87,20 @@ export default async function ArticlePage({ params }: Props) {
           </div>
         </div>
       </header>
+
+      {/* Shown at its stored 16:9 shape, so the whole photo is visible on any screen. */}
+      <div className="container">
+        <figure className={styles.figure}>
+          <Image
+            src={withFallback(article.image, PLACEHOLDER.article)}
+            alt={article.imageAlt || article.title}
+            fill
+            priority
+            sizes="(max-width: 1240px) 100vw, 1144px"
+            style={{ objectFit: 'cover' }}
+          />
+        </figure>
+      </div>
 
       <div className="container">
         <div className={styles.layout}>
