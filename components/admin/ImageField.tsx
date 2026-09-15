@@ -1,12 +1,8 @@
 'use client';
 
 import { useId, useRef, useState } from 'react';
-import {
-  ACCEPTED_EXTENSIONS,
-  IMAGE_SPECS,
-  MAX_UPLOAD_BYTES,
-  type ImagePurpose,
-} from '@/lib/image-specs';
+import { ACCEPTED_EXTENSIONS, IMAGE_SPECS, type ImagePurpose } from '@/lib/image-specs';
+import { prepareImageForUpload } from '@/lib/client-image';
 
 type Props = {
   name: string;
@@ -36,24 +32,20 @@ export default function ImageField({
   const fileRef = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState(defaultValue);
   const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<'optimising' | 'uploading'>('uploading');
   const [error, setError] = useState('');
   const [dragging, setDragging] = useState(false);
 
-  async function upload(file: File) {
-    // Fail fast on the client so an oversized file is never sent at all.
-    if (file.size > MAX_UPLOAD_BYTES) {
-      setError(
-        `That file is ${(file.size / (1024 * 1024)).toFixed(1)} MB. The limit is ` +
-          `${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))} MB — please compress it and try again.`
-      );
-      if (fileRef.current) fileRef.current.value = '';
-      return;
-    }
-
+  async function upload(original: File) {
     setBusy(true);
     setError('');
 
     try {
+      // Large photos are compressed here first; small ones go up untouched.
+      setPhase('optimising');
+      const { file } = await prepareImageForUpload(original, purpose);
+
+      setPhase('uploading');
       const body = new FormData();
       body.append('file', file);
       body.append('purpose', purpose);
@@ -68,8 +60,12 @@ export default function ImageField({
 
       setUrl(result.url);
       onChange?.(result.url);
-    } catch {
-      setError('The upload failed. Please try again.');
+    } catch (caught) {
+      setError(
+        caught instanceof Error && caught.message
+          ? caught.message
+          : 'The upload failed. Please try again.'
+      );
     } finally {
       setBusy(false);
       if (fileRef.current) fileRef.current.value = '';
@@ -108,7 +104,7 @@ export default function ImageField({
             <img src={url} alt="" />
           ) : (
             <p className="a-dropzone-hint">
-              {busy ? 'Uploading…' : 'Click “Upload image”, or drag a photo here'}
+{busy ? (phase === 'optimising' ? 'Optimising image…' : 'Uploading…') : 'Click “Upload image”, or drag a photo here'}
             </p>
           )}
         </div>
@@ -123,7 +119,8 @@ export default function ImageField({
               <strong>Aspect ratio:</strong> {spec.ratio}
             </li>
             <li>
-              <strong>Max file size:</strong> {Math.round(spec.maxBytes / (1024 * 1024))} MB
+              <strong>File size:</strong> any photo up to 30 MB — larger files are compressed
+              automatically and saved under {Math.round(spec.maxBytes / (1024 * 1024))} MB
             </li>
             <li>
               <strong>Formats:</strong> JPG, PNG or WebP
@@ -156,7 +153,7 @@ export default function ImageField({
               onClick={() => fileRef.current?.click()}
               disabled={busy}
             >
-              {busy ? 'Uploading…' : url ? 'Replace image' : 'Upload image'}
+{busy ? (phase === 'optimising' ? 'Optimising image…' : 'Uploading…') : url ? 'Replace image' : 'Upload image'}
             </button>
             {url && (
               <button type="button" className="a-btn a-btn--danger" onClick={remove} disabled={busy}>

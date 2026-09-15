@@ -18,8 +18,17 @@ export type ImageSpec = {
   note: string;
 };
 
-/** Hard limit on what may be uploaded. Anything larger is rejected outright. */
+/** Hard limit on the size of an image as stored. The server guarantees it. */
 export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB
+
+/**
+ * Largest request the upload route accepts. Kept below Vercel's 4.5 MB
+ * serverless request limit; anything bigger is compressed in the browser first.
+ */
+export const MAX_REQUEST_BYTES = 4 * 1024 * 1024; // 4 MB
+
+/** Largest original photo the CMS will attempt to compress in the browser. */
+export const MAX_SOURCE_BYTES = 30 * 1024 * 1024; // 30 MB
 
 export const IMAGE_SPECS: Record<ImagePurpose, ImageSpec> = {
   hero: {
@@ -86,7 +95,7 @@ export function describeSpec(purpose: ImagePurpose): string[] {
   return [
     `${spec.fixed ? 'Required size' : 'Recommended size'}: ${spec.width} × ${spec.height} px`,
     `Aspect ratio: ${spec.ratio}`,
-    `Max file size: ${Math.round(spec.maxBytes / (1024 * 1024))} MB`,
+    `Saved under ${Math.round(spec.maxBytes / (1024 * 1024))} MB — larger photos are compressed automatically`,
     'Format: JPG, PNG or WebP',
   ];
 }

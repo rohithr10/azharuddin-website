@@ -7,6 +7,7 @@ import { Media } from '@/lib/models';
 import {
   ACCEPTED_MIME_TYPES,
   IMAGE_SPECS,
+  MAX_REQUEST_BYTES,
   MAX_UPLOAD_BYTES,
   type ImagePurpose,
 } from '@/lib/image-specs';
@@ -44,27 +45,49 @@ export async function saveUpload(
   if (!ACCEPTED_MIME_TYPES.includes(file.type as (typeof ACCEPTED_MIME_TYPES)[number])) {
     throw new Error('Only JPG, PNG and WebP images can be uploaded.');
   }
-  if (file.size > MAX_UPLOAD_BYTES) {
+  // The CMS compresses large photos in the browser before sending them, so
+  // only something that bypassed it can arrive this large.
+  if (file.size > MAX_REQUEST_BYTES) {
     throw new Error(
-      `That file is ${(file.size / (1024 * 1024)).toFixed(1)} MB. The limit is ` +
-        `${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))} MB — please compress it and try again.`
+      `That file is ${(file.size / (1024 * 1024)).toFixed(1)} MB, which is too large to receive. ` +
+        'Please upload it through the content manager, which compresses it automatically.'
     );
   }
 
   const spec = IMAGE_SPECS[purpose];
   const inputBuffer = Buffer.from(await file.arrayBuffer());
 
-  const pipeline = sharp(inputBuffer, { failOn: 'error' }).rotate(); // honour EXIF orientation
+  const base = sharp(inputBuffer, { failOn: 'error' }).rotate(); // honour EXIF orientation
 
   if (spec.fixed) {
-    pipeline.resize(spec.width, spec.height, { fit: 'cover', position: 'attention' });
+    base.resize(spec.width, spec.height, {
+      fit: 'cover',
+      position: 'attention',
+      kernel: 'lanczos3',
+    });
   } else {
-    pipeline.resize({ width: spec.width, withoutEnlargement: true });
+    base.resize({ width: spec.width, withoutEnlargement: true, kernel: 'lanczos3' });
   }
 
-  const { data, info } = await pipeline
-    .webp({ quality: 84, effort: 4 })
-    .toBuffer({ resolveWithObject: true });
+  // A light sharpen restores the crispness downscaling softens.
+  base.sharpen({ sigma: 0.5 });
+
+  // Start at high quality and only step down if the result would exceed the
+  // stored-size limit. At these dimensions the first pass almost always fits.
+  let encoded: { data: Buffer; info: sharp.OutputInfo } | null = null;
+  for (const quality of [90, 85, 80, 74, 68]) {
+    encoded = await base
+      .clone()
+      .webp({ quality, effort: 5, smartSubsample: true })
+      .toBuffer({ resolveWithObject: true });
+    if (encoded.data.length <= MAX_UPLOAD_BYTES) break;
+  }
+
+  if (!encoded || encoded.data.length > MAX_UPLOAD_BYTES) {
+    throw new Error('This image could not be compressed under 2 MB. Please try another photo.');
+  }
+
+  const { data, info } = encoded;
 
   await dbConnect();
 

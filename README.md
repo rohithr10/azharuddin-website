@@ -94,8 +94,13 @@ of an odd photograph.
 | Footer background | 1920 × 300 px | ~6.4:1 |
 | Media library | max 1600 px wide | kept as-is |
 
-**Maximum file size: 2 MB**, enforced in the browser and again on the server.
-JPG, PNG or WebP in; always stored as WebP.
+**File size:** any photo up to 30 MB can be uploaded straight from a phone or
+camera — no need to resize or compress it first. Photos over 2 MB are
+downscaled in the browser (never below 1.5× their final size, so no detail is
+lost) before sending, which also keeps uploads under Vercel's 4.5 MB request
+limit. The server then makes one high-quality resize and guarantees the stored
+file is **under 2 MB** — in practice a banner is 0.3–0.5 MB. JPG, PNG or WebP
+in; always stored as WebP.
 
 Uploaded images are held in MongoDB and served from `/api/media/<id>.webp` with
 immutable caching. That means uploads work on hosts with a read-only filesystem

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { ACCEPTED_EXTENSIONS, IMAGE_SPECS, type ImagePurpose } from '@/lib/image-specs';
+import { prepareImageForUpload } from '@/lib/client-image';
 
 const PURPOSES: ImagePurpose[] = ['general', 'hero', 'featured', 'article', 'about', 'footer'];
 
@@ -19,21 +20,24 @@ export default function MediaUploader() {
     setError('');
     let uploaded = 0;
 
-    for (const file of Array.from(files)) {
-      const body = new FormData();
-      body.append('file', file);
-      body.append('purpose', purpose);
-
+    for (const original of Array.from(files)) {
       try {
+        const { file } = await prepareImageForUpload(original, purpose);
+        const body = new FormData();
+        body.append('file', file);
+        body.append('purpose', purpose);
+
         const response = await fetch('/api/admin/upload', { method: 'POST', body });
         const result = await response.json();
         if (!response.ok) {
-          setError(`${file.name}: ${result.error || 'upload failed'}`);
+          setError(`${original.name}: ${result.error || 'upload failed'}`);
         } else {
           uploaded += 1;
         }
-      } catch {
-        setError(`${file.name}: upload failed`);
+      } catch (caught) {
+        setError(
+          `${original.name}: ${caught instanceof Error && caught.message ? caught.message : 'upload failed'}`
+        );
       }
     }
 
@@ -82,7 +86,7 @@ export default function MediaUploader() {
           </select>
           <span className="a-hint">
             Recommended: {spec.width} × {spec.height} px ({spec.ratio}) ·{' '}
-            {Math.round(spec.maxBytes / (1024 * 1024))} MB · JPG, PNG or WebP
+            photos up to 30 MB are compressed automatically · JPG, PNG or WebP
           </span>
         </div>
 
