@@ -771,3 +771,156 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------------- Image cropper ---------------- */
+.a-cropper-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: clamp(0rem, 3vw, 2rem);
+  background: rgba(20, 21, 15, 0.72);
+}
+
+.a-cropper {
+  display: flex;
+  flex-direction: column;
+  width: min(980px, 100%);
+  max-height: 100%;
+  background: var(--a-panel);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.7);
+}
+
+.a-cropper:focus {
+  outline: none;
+}
+
+.a-cropper-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.35rem;
+  border-bottom: 1px solid var(--a-line);
+}
+
+.a-cropper-stage {
+  position: relative;
+  flex-shrink: 0;
+  height: min(56vh, 520px);
+  background: #1b1c17;
+}
+
+.a-cropper-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.75rem;
+  padding: 0.9rem 1.35rem;
+  border-bottom: 1px solid var(--a-line);
+}
+
+.a-cropper-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.a-cropper-group .a-label {
+  margin-right: 0.25rem;
+}
+
+.a-cropper-group .a-tool {
+  border: 1px solid var(--a-line);
+  font-size: 1rem;
+}
+
+.a-cropper-zoom {
+  width: min(220px, 42vw);
+  accent-color: var(--a-forest);
+}
+
+.a-chip {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--a-line);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.75rem;
+  color: var(--a-ink);
+  transition: all 0.2s ease;
+}
+
+.a-chip:hover:not(:disabled) {
+  border-color: var(--a-forest);
+}
+
+.a-chip[aria-pressed='true'] {
+  background: var(--a-forest);
+  border-color: var(--a-forest);
+  color: #f3efe6;
+}
+
+.a-cropper-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.5rem;
+  padding: 0.75rem 1.35rem;
+  color: var(--a-muted);
+  font-size: 0.8rem;
+}
+
+.a-cropper-meta strong {
+  color: var(--a-ink);
+  font-weight: 500;
+}
+
+.a-cropper-warning {
+  flex-basis: 100%;
+  color: #9a5b12;
+}
+
+.a-cropper-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1.35rem;
+  border-top: 1px solid var(--a-line);
+  background: #faf8f4;
+}
+
+.a-cropper-spacer {
+  flex: 1;
+}
+
+@media (max-width: 640px) {
+  .a-cropper-backdrop {
+    padding: 0;
+  }
+
+  .a-cropper {
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .a-cropper-stage {
+    flex: 1;
+    height: auto;
+    min-height: 240px;
+  }
+
+  .a-cropper-controls {
+    gap: 0.6rem 1rem;
+  }
+
+  .a-cropper-foot .a-btn {
+    flex: 1 1 auto;
+  }
+
+  .a-cropper-spacer {
+    display: none;
+  }
+}

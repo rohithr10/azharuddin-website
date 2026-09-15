@@ -81,9 +81,18 @@ Images still in use are labelled and protected from deletion.
 The CMS shows these next to every upload field. Larger images are accepted and
 resized automatically rather than rejected.
 
-These sizes are enforced, not suggested. Whatever is uploaded is resized and
-centre-cropped to exactly these dimensions, so the layout never shifts because
-of an odd photograph.
+These sizes are enforced, not suggested. Choosing a photo opens a **cropper**:
+drag to frame it, zoom (slider, buttons or scroll wheel) and rotate in 90°
+steps. For every slot below the frame is locked to that slot's exact shape, so
+what you frame is what the site shows; the Media Library instead offers
+Original, 16:9, 4:3, 1:1 and 3:4. The crop is cut from the full-resolution
+original, and the cropper warns when a selection is smaller than the stored
+size and would look soft. "Skip" keeps the automatic centre crop, and
+"Adjust crop" reopens the last photo to re-frame it. Selecting several files
+in the Media Library crops them one after another.
+
+Whatever is uploaded ends up at exactly these dimensions, so the layout never
+shifts because of an odd photograph.
 
 | Where | Stored size | Ratio |
 | --- | --- | --- |

@@ -1,8 +1,9 @@
 'use client';
 
-import { useId, useRef, useState } from 'react';
+import { useCallback, useId, useRef, useState } from 'react';
+import ImageCropper from './ImageCropper';
 import { ACCEPTED_EXTENSIONS, IMAGE_SPECS, type ImagePurpose } from '@/lib/image-specs';
-import { prepareImageForUpload } from '@/lib/client-image';
+import { prepareImageForUpload, validateImageFile } from '@/lib/client-image';
 
 type Props = {
   name: string;
@@ -15,8 +16,8 @@ type Props = {
 };
 
 /**
- * Upload → preview → replace → remove → upload again, with the recommended
- * dimensions shown right beside the field so the client never has to guess.
+ * Choose → crop → upload → preview → replace or re-crop → remove, with the
+ * required dimensions shown right beside the field.
  */
 export default function ImageField({
   name,
@@ -35,15 +36,50 @@ export default function ImageField({
   const [phase, setPhase] = useState<'optimising' | 'uploading'>('uploading');
   const [error, setError] = useState('');
   const [dragging, setDragging] = useState(false);
+  /** The photo waiting in the crop dialog. */
+  const [pending, setPending] = useState<File | null>(null);
+  /** The last original chosen, kept so the crop can be adjusted after upload. */
+  const [lastOriginal, setLastOriginal] = useState<File | null>(null);
 
-  async function upload(original: File) {
+  function choose(file: File) {
+    const problem = validateImageFile(file);
+    if (problem) {
+      setError(problem);
+      if (fileRef.current) fileRef.current.value = '';
+      return;
+    }
+    setError('');
+    setPending(file);
+  }
+
+  const cancelCrop = useCallback(() => {
+    setPending(null);
+    if (fileRef.current) fileRef.current.value = '';
+  }, []);
+
+  function handleCropped(cropped: File) {
+    const original = pending;
+    setPending(null);
+    setLastOriginal(original);
+    upload(cropped, true);
+  }
+
+  function handleSkip() {
+    const original = pending;
+    setPending(null);
+    if (!original) return;
+    setLastOriginal(original);
+    upload(original, false);
+  }
+
+  async function upload(source: File, alreadyPrepared: boolean) {
     setBusy(true);
     setError('');
 
     try {
-      // Large photos are compressed here first; small ones go up untouched.
+      // A cropped image is already sized; an uncropped one is compressed here if large.
       setPhase('optimising');
-      const { file } = await prepareImageForUpload(original, purpose);
+      const file = alreadyPrepared ? source : (await prepareImageForUpload(source, purpose)).file;
 
       setPhase('uploading');
       const body = new FormData();
@@ -74,6 +110,7 @@ export default function ImageField({
 
   function remove() {
     setUrl('');
+    setLastOriginal(null);
     setError('');
     onChange?.('');
     if (fileRef.current) fileRef.current.value = '';
@@ -96,7 +133,7 @@ export default function ImageField({
             event.preventDefault();
             setDragging(false);
             const file = event.dataTransfer.files?.[0];
-            if (file) upload(file);
+            if (file && !busy) choose(file);
           }}
         >
           {url ? (
@@ -104,7 +141,11 @@ export default function ImageField({
             <img src={url} alt="" />
           ) : (
             <p className="a-dropzone-hint">
-{busy ? (phase === 'optimising' ? 'Optimising image…' : 'Uploading…') : 'Click “Upload image”, or drag a photo here'}
+              {busy
+                ? phase === 'optimising'
+                  ? 'Optimising image…'
+                  : 'Uploading…'
+                : 'Click “Upload image”, or drag a photo here'}
             </p>
           )}
         </div>
@@ -125,12 +166,12 @@ export default function ImageField({
             <li>
               <strong>Formats:</strong> JPG, PNG or WebP
             </li>
-            {spec.fixed && (
-              <li>
-                Any photograph is automatically resized and centre-cropped to exactly{' '}
-                {spec.width} × {spec.height} px, so the layout stays consistent.
-              </li>
-            )}
+            <li>
+              After choosing a photo you can crop, zoom and rotate it
+              {spec.fixed
+                ? ` — the frame is locked to the right shape, and the result is saved at exactly ${spec.width} × ${spec.height} px.`
+                : ' and pick a shape.'}
+            </li>
             <li>{spec.note}</li>
           </ul>
 
@@ -142,7 +183,7 @@ export default function ImageField({
             hidden
             onChange={(event) => {
               const file = event.target.files?.[0];
-              if (file) upload(file);
+              if (file) choose(file);
             }}
           />
 
@@ -153,8 +194,24 @@ export default function ImageField({
               onClick={() => fileRef.current?.click()}
               disabled={busy}
             >
-{busy ? (phase === 'optimising' ? 'Optimising image…' : 'Uploading…') : url ? 'Replace image' : 'Upload image'}
+              {busy
+                ? phase === 'optimising'
+                  ? 'Optimising image…'
+                  : 'Uploading…'
+                : url
+                  ? 'Replace image'
+                  : 'Upload image'}
             </button>
+            {url && lastOriginal && (
+              <button
+                type="button"
+                className="a-btn a-btn--secondary"
+                onClick={() => setPending(lastOriginal)}
+                disabled={busy}
+              >
+                Adjust crop
+              </button>
+            )}
             {url && (
               <button type="button" className="a-btn a-btn--danger" onClick={remove} disabled={busy}>
                 Remove image
@@ -187,6 +244,16 @@ export default function ImageField({
       </div>
 
       <input type="hidden" name={name} value={url} />
+
+      {pending && (
+        <ImageCropper
+          file={pending}
+          purpose={purpose}
+          onCancel={cancelCrop}
+          onSkip={handleSkip}
+          onCropped={handleCropped}
+        />
+      )}
     </div>
   );
 }
